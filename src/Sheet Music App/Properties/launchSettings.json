@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Sheet Music App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Sheet Music App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
