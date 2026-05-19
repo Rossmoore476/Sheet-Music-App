@@ -38,6 +38,27 @@ namespace Sheet_Music_App
             Categories.Add(new Category { Name = "Category 2", Glyph = Symbol.Keyboard, Tooltip = "This is category 2" });
             Categories.Add(new Category { Name = "Category 3", Glyph = Symbol.Library, Tooltip = "This is category 3" });
             Categories.Add(new Category { Name = "Category 4", Glyph = Symbol.Mail, Tooltip = "This is category 4" });
+
+            // create NavigationViewItem children for the Library NavigationViewItem from the data-driven Categories collection
+            var libParent = nvSample.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(i => (i.Tag as string) == "CategoriesContainer");
+            if (libParent != null)
+            {
+                foreach (var catBase in Categories)
+                {
+                    if (catBase is Category cat)
+                    {
+                        var navItem = new NavigationViewItem
+                        {
+                            Content = cat.Name,
+                            Icon = new SymbolIcon(cat.Glyph),
+                            Tag = cat.Name
+                        };
+
+                        ToolTipService.SetToolTip(navItem, cat.Tooltip);
+                        libParent.MenuItems.Add(navItem);
+                    }
+                }
+            }
         }
 
         public void ApplyTheme(ElementTheme theme)
@@ -57,7 +78,23 @@ namespace Sheet_Music_App
                 return;
             }
 
-            // handle other item invocations here if needed
+            // handle other item invocations by Tag
+            if (args.InvokedItemContainer?.Tag is string tag)
+            {
+                if (tag == "Home")
+                {
+                    ContentFrame.Navigate(typeof(HomePage));
+                    return;
+                }
+
+                if (tag == "NewProject")
+                {
+                    ContentFrame.Navigate(typeof(NewProjectPage));
+                    return;
+                }
+            }
+
+            // no navigation for TreeView items (they are shown inside the Categories nav item)
         }
 
         // model and selector types moved to namespace scope so XAML can reference them as `local:Category` etc.

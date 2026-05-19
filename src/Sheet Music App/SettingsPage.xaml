@@ -5,16 +5,85 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Sheet_Music_App">
 
-    <Grid Padding="24">
-        <StackPanel Spacing="12">
-            <TextBlock Text="Appearance" FontSize="20" FontWeight="Bold" />
+    <Grid x:Name="LayoutRoot" Padding="24">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition x:Name="RightColumnDef" Width="320" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-            <TextBlock Text="App theme" />
-            <ComboBox x:Name="ThemeComboBox" SelectionChanged="ThemeComboBox_SelectionChanged" Width="200">
-                <ComboBoxItem Content="System" Tag="Default" />
-                <ComboBoxItem Content="Light" Tag="Light" />
-                <ComboBoxItem Content="Dark" Tag="Dark" />
-            </ComboBox>
+        <!-- Visual states: default layout stacks right column below; Wide places it to the right -->
+        <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup x:Name="AdaptiveStates">
+                    <VisualState x:Name="NarrowState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="0" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <!-- Move right column content below; remove second column by setting width to 0 and span main across both columns -->
+                            <Setter Target="RightColumnHolder.(Grid.Row)" Value="1" />
+                            <Setter Target="RightColumnHolder.(Grid.Column)" Value="0" />
+                            <Setter Target="RightColumnDef.Width" Value="0" />
+                            <Setter Target="MainStack.(Grid.ColumnSpan)" Value="2" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="WideState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="700" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="RightColumnHolder.(Grid.Row)" Value="0" />
+                            <Setter Target="RightColumnHolder.(Grid.Column)" Value="1" />
+                            <Setter Target="RightColumnDef.Width" Value="320" />
+                            <Setter Target="MainStack.(Grid.ColumnSpan)" Value="1" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <!-- Main column content -->
+        <StackPanel x:Name="MainStack" Grid.Row="0" Grid.Column="0" Spacing="16" HorizontalAlignment="Stretch">
+            <TextBlock Text="Settings" FontSize="24" FontWeight="SemiBold" />
+
+            <TextBlock Text="Appearance" FontSize="14" FontWeight="SemiBold" />
+
+            <!-- App theme expander with icon and subtitle in header -->
+            <Expander ExpandDirection="Down" HorizontalAlignment="Stretch">
+                <Expander.Header>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <SymbolIcon Symbol="Edit" VerticalAlignment="Center" />
+                        <StackPanel>
+                            <TextBlock Text="App theme" FontWeight="SemiBold" />
+                            <TextBlock Text="Select which app theme to display" FontSize="12" Foreground="#BBBBBB" />
+                        </StackPanel>
+                    </StackPanel>
+                </Expander.Header>
+                <!--TODO: Make this not center aligned-->
+                <StackPanel Padding="12" Spacing="12">
+                    <RadioButton x:Name="LightRadio" Content="Light" GroupName="ThemeGroup" Checked="ThemeRadio_Checked" />
+                    <RadioButton x:Name="DarkRadio" Content="Dark" GroupName="ThemeGroup" Checked="ThemeRadio_Checked" />
+                    <RadioButton x:Name="SystemRadio" Content="Use system setting" GroupName="ThemeGroup" Checked="ThemeRadio_Checked" />
+                </StackPanel>
+            </Expander>
+
+        </StackPanel>
+
+        <!-- Right column: About / links -->
+        <StackPanel x:Name="RightColumnHolder" Grid.Row="1" Grid.Column="0" Margin="24,0,0,0" Spacing="12">
+            <TextBlock Text="About Sheet Music App" FontWeight="SemiBold" />
+            <TextBlock TextWrapping="Wrap" Foreground="#BBBBBB" FontSize="12" xml:space="preserve">Sheet Music App 1.0.0 
+                
+© 2026 Ross Moore. All rights reserved.
+            </TextBlock>
+
+            <!-- THESE DO NOT HAVE CLICK EVENTS YET-->
+            <HyperlinkButton Content="License Terms" />
+            <HyperlinkButton Content="GitHub Repository" />
+
+            <Button Content="Send feedback" HorizontalAlignment="Left" />
         </StackPanel>
     </Grid>
 </Page>

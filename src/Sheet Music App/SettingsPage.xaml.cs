@@ -9,46 +9,45 @@ namespace Sheet_Music_App
         {
             this.InitializeComponent();
 
-            // set initial selection based on current requested theme
+            // set initial radio selection based on current requested theme
             if (MainWindow.Current != null && MainWindow.Current.Content is FrameworkElement root)
             {
                 var theme = root.RequestedTheme;
                 switch (theme)
                 {
                     case ElementTheme.Light:
-                        ThemeComboBox.SelectedIndex = 1; // Light
+                        LightRadio.IsChecked = true;
                         break;
                     case ElementTheme.Dark:
-                        ThemeComboBox.SelectedIndex = 2; // Dark
+                        DarkRadio.IsChecked = true;
                         break;
                     default:
-                        ThemeComboBox.SelectedIndex = 0; // System
+                        SystemRadio.IsChecked = true;
                         break;
                 }
             }
             else
             {
-                ThemeComboBox.SelectedIndex = 0;
+                SystemRadio.IsChecked = true;
             }
         }
 
-        private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+
+        private void ThemeRadio_Checked(object sender, RoutedEventArgs e)
         {
-            if (ThemeComboBox.SelectedItem is ComboBoxItem item && MainWindow.Current != null)
+            if (MainWindow.Current == null) return;
+
+            if (LightRadio.IsChecked == true)
             {
-                var tag = item.Tag as string ?? "Default";
-                if (tag == "Light")
-                {
-                    MainWindow.Current.ApplyTheme(ElementTheme.Light);
-                }
-                else if (tag == "Dark")
-                {
-                    MainWindow.Current.ApplyTheme(ElementTheme.Dark);
-                }
-                else
-                {
-                    MainWindow.Current.ApplyTheme(ElementTheme.Default);
-                }
+                MainWindow.Current.ApplyTheme(ElementTheme.Light);
+            }
+            else if (DarkRadio.IsChecked == true)
+            {
+                MainWindow.Current.ApplyTheme(ElementTheme.Dark);
+            }
+            else
+            {
+                MainWindow.Current.ApplyTheme(ElementTheme.Default);
             }
         }
     }
