@@ -8,7 +8,8 @@
     <Grid x:Name="LayoutRoot" Padding="24">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition x:Name="RightColumnDef" Width="320" />
+            <ColumnDefinition x:Name="RightColumnDef" 
+                              Width="320" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -79,11 +80,10 @@
 © 2026 Ross Moore. All rights reserved.
             </TextBlock>
 
-            <!-- THESE DO NOT HAVE CLICK EVENTS YET-->
-            <HyperlinkButton Content="License Terms" />
-            <HyperlinkButton Content="GitHub Repository" />
-
-            <Button Content="Send feedback" HorizontalAlignment="Left" />
+            
+            <HyperlinkButton Content="License Terms" Click="Link_Licence"/>
+            <HyperlinkButton Content="GitHub Repository" Click="Link_GitHub"/>
+            <HyperlinkButton Content="Send feedback" Click="Link_Feedback"/>
         </StackPanel>
     </Grid>
 </Page>

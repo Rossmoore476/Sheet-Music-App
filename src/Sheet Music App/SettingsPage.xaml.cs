@@ -1,5 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using System;
+using Windows.System;
 
 namespace Sheet_Music_App
 {
@@ -50,5 +52,22 @@ namespace Sheet_Music_App
                 MainWindow.Current.ApplyTheme(ElementTheme.Default);
             }
         }
+
+
+        private async void Link_Licence(object sender, RoutedEventArgs e)
+        {
+            await Launcher.LaunchUriAsync(new Uri("https://www.gnu.org/licenses/agpl-3.0.html"));
+        }
+
+        private async void Link_GitHub(object sender, RoutedEventArgs e)
+        {
+            await Launcher.LaunchUriAsync(new Uri("https://github.com/Rossmoore476/Sheet-Music-App"));
+        }
+
+        private async void Link_Feedback(object sender, RoutedEventArgs e)
+        {
+            await Launcher.LaunchUriAsync(new Uri("https://github.com/Rossmoore476/Sheet-Music-App/issues/new"));
+        }
+
     }
 }

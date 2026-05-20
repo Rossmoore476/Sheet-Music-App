@@ -3,9 +3,9 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Markup;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -26,7 +26,7 @@ namespace Sheet_Music_App
     public sealed partial class MainWindow : Window
     {
         public ObservableCollection<CategoryBase> Categories { get; } = new ObservableCollection<CategoryBase>();
-        public static MainWindow? Current { get; private set; }
+        public static new MainWindow? Current { get; private set; }
 
         public MainWindow()
         {
@@ -103,6 +103,7 @@ namespace Sheet_Music_App
     }
 
     // Namespace-level model and selector so XAML can resolve types like `local:Category` and use the selector as a resource.
+    // TODO: Refactor the side bar
     public class CategoryBase { }
 
     public class Category : CategoryBase
