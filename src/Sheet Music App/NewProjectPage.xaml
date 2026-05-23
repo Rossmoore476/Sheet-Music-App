@@ -5,6 +5,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Grid Padding="24">
-        <!-- Empty New Project page -->
+        <StackPanel Spacing="16">
+            <TextBlock Text="New Project" FontSize="24" FontWeight="SemiBold" />
+            <!-- Empty New Project page -->
+        </StackPanel>
     </Grid>
 </Page>

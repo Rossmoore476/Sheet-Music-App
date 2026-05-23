@@ -39,10 +39,24 @@ namespace Sheet_Music_App
             Categories.Add(new Category { Name = "Category 3", Glyph = Symbol.Library, Tooltip = "This is category 3" });
             Categories.Add(new Category { Name = "Category 4", Glyph = Symbol.Mail, Tooltip = "This is category 4" });
 
-            // create NavigationViewItem children for the Library NavigationViewItem from the data-driven Categories collection
-            var libParent = nvSample.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(i => (i.Tag as string) == "CategoriesContainer");
-            if (libParent != null)
+            // If there are no projects, hide Home and the Projects header and don't add project items.
+            if (Categories.Count == 0)
             {
+                HomeNavItem.Visibility = Visibility.Collapsed;
+                ProjectsHeader.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                HomeNavItem.Visibility = Visibility.Visible;
+                ProjectsHeader.Visibility = Visibility.Visible;
+                // insert project items between the header and the New Project item
+                int insertIndex = nvSample.MenuItems.IndexOf(NewProjectNavItem);
+                if (insertIndex < 0)
+                {
+                    // fallback: append to the end
+                    insertIndex = nvSample.MenuItems.Count;
+                }
+
                 foreach (var catBase in Categories)
                 {
                     if (catBase is Category cat)
@@ -50,14 +64,32 @@ namespace Sheet_Music_App
                         var navItem = new NavigationViewItem
                         {
                             Content = cat.Name,
-                            Icon = new SymbolIcon(cat.Glyph),
+                            Icon = new SymbolIcon(Symbol.Library),
                             Tag = cat.Name
                         };
 
                         ToolTipService.SetToolTip(navItem, cat.Tooltip);
-                        libParent.MenuItems.Add(navItem);
+                        nvSample.MenuItems.Insert(insertIndex++, navItem);
                     }
                 }
+            }
+
+            // Wire up back handling and navigation tracking so the back button works between pages
+            nvSample.BackRequested += NvSample_BackRequested;
+            ContentFrame.Navigated += ContentFrame_Navigated;
+
+            // Choose initial page: Home if there are projects, otherwise NewProject
+            if (Categories.Count > 0)
+            {
+                nvSample.SelectedItem = HomeNavItem;
+                ContentFrame.Navigate(typeof(HomePage));
+                this.Title = "Home - Sheet Music App";
+            }
+            else
+            {
+                nvSample.SelectedItem = NewProjectNavItem;
+                ContentFrame.Navigate(typeof(NewProjectPage));
+                this.Title = "New Project - Sheet Music App";
             }
         }
 
@@ -75,6 +107,7 @@ namespace Sheet_Music_App
             {
                 // navigate to SettingsPage when the Settings item is invoked
                 ContentFrame.Navigate(typeof(SettingsPage));
+                this.Title = "Settings - Sheet Music App";
                 return;
             }
 
@@ -84,14 +117,20 @@ namespace Sheet_Music_App
                 if (tag == "Home")
                 {
                     ContentFrame.Navigate(typeof(HomePage));
+                    this.Title = "Home - Sheet Music App";
                     return;
                 }
 
                 if (tag == "NewProject")
                 {
                     ContentFrame.Navigate(typeof(NewProjectPage));
+                    this.Title = "New Project - Sheet Music App";
                     return;
                 }
+
+                // If a project item was clicked, navigate to project page (if implemented) or show Home
+                ContentFrame.Navigate(typeof(HomePage));
+                this.Title = tag + " - Sheet Music App";
             }
 
             // no navigation for TreeView items (they are shown inside the Categories nav item)
@@ -99,11 +138,34 @@ namespace Sheet_Music_App
 
         // model and selector types moved to namespace scope so XAML can reference them as `local:Category` etc.
 
+        private void NvSample_BackRequested(NavigationView sender, NavigationViewBackRequestedEventArgs args)
+        {
+            if (ContentFrame.CanGoBack)
+            {
+                ContentFrame.GoBack();
+            }
+        }
+
+        private void ContentFrame_Navigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        {
+            nvSample.IsBackEnabled = ContentFrame.CanGoBack;
+
+            var sourcePageType = e.SourcePageType;
+            if (sourcePageType == typeof(HomePage))
+            {
+                nvSample.SelectedItem = HomeNavItem;
+            }
+            else if (sourcePageType == typeof(NewProjectPage))
+            {
+                nvSample.SelectedItem = NewProjectNavItem;
+            }
+        }
+
 
     }
 
     // Namespace-level model and selector so XAML can resolve types like `local:Category` and use the selector as a resource.
-    // TODO: Refactor the side bar
+    
     public class CategoryBase { }
 
     public class Category : CategoryBase

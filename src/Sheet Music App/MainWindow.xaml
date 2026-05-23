@@ -38,9 +38,10 @@
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Name="HomeNavItem" Content="Home" Tag="Home" Icon="Home" />
 
-                <!-- Categories rendered as a nested menu (data-driven). Menu items will be created from the Categories collection in code-behind. -->
-                <NavigationViewItem Icon="Library" Tag="CategoriesContainer" Content="Projects" />
-                <!-- MenuItems populated in MainWindow constructor from the Categories ObservableCollection -->
+                <!-- Header shown above project items. Hidden when there are no projects. -->
+                <NavigationViewItemHeader x:Name="ProjectsHeader" Content="Projects" Visibility="Collapsed" />
+
+                <!-- Categories rendered as top-level navigation items. Menu items will be created from the Categories collection in code-behind. -->
 
                 <NavigationViewItem x:Name="NewProjectNavItem" Content="New Project" Tag="NewProject" Icon="Add" />
             </NavigationView.MenuItems>

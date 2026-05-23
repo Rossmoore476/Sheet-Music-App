@@ -55,7 +55,7 @@
             <Expander ExpandDirection="Down" HorizontalAlignment="Stretch">
                 <Expander.Header>
                     <StackPanel Orientation="Horizontal" Spacing="12">
-                        <SymbolIcon Symbol="Edit" VerticalAlignment="Center" />
+                        <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE790;" VerticalAlignment="Center" />
                         <StackPanel>
                             <TextBlock Text="App theme" FontWeight="SemiBold" />
                             <TextBlock Text="Select which app theme to display" FontSize="12" Foreground="#BBBBBB" />
