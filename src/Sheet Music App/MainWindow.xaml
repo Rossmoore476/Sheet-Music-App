@@ -32,8 +32,8 @@
 
         <NavigationView x:Name="nvSample"
                 IsSettingsVisible="True"
-                ItemInvoked="NvSample_ItemInvoked">
-
+                ItemInvoked="NvSample_ItemInvoked"
+                PaneDisplayMode="Left">
             <!-- Home tab -->
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Name="HomeNavItem" Content="Home" Tag="Home" Icon="Home" />

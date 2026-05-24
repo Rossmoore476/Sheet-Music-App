@@ -28,7 +28,7 @@ namespace Sheet_Music_App
         public ObservableCollection<CategoryBase> Categories { get; } = new ObservableCollection<CategoryBase>();
         public static new MainWindow? Current { get; private set; }
 
-        public MainWindow()
+        public MainWindow() 
         {
             InitializeComponent();
             Current = this;
@@ -99,6 +99,16 @@ namespace Sheet_Music_App
             {
                 root.RequestedTheme = theme;
             }
+        }
+
+        public void SetNavStyle(NavigationViewPaneDisplayMode mode)
+        {
+            nvSample.PaneDisplayMode = mode;
+        }
+
+        public NavigationViewPaneDisplayMode GetNavStyle()
+        {
+            return nvSample.PaneDisplayMode;
         }
 
         private void NvSample_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)

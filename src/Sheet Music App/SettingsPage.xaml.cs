@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using Windows.System;
+using CommunityToolkit.WinUI.Controls;
 
 namespace Sheet_Music_App
 {
@@ -10,46 +11,84 @@ namespace Sheet_Music_App
         public SettingsPage()
         {
             this.InitializeComponent();
-
-            // set initial radio selection based on current requested theme
-            if (MainWindow.Current != null && MainWindow.Current.Content is FrameworkElement root)
+            // set initial theme selection in the ComboBox based on current requested theme
+            // use FindName to locate the ComboBox in XAML so this code doesn't rely on a generated field
+            var themeCombo = this.FindName("ThemeCombo") as ComboBox;
+            if (themeCombo != null)
             {
-                var theme = root.RequestedTheme;
-                switch (theme)
+                if (MainWindow.Current != null && MainWindow.Current.Content is FrameworkElement root)
                 {
-                    case ElementTheme.Light:
-                        LightRadio.IsChecked = true;
-                        break;
-                    case ElementTheme.Dark:
-                        DarkRadio.IsChecked = true;
-                        break;
-                    default:
-                        SystemRadio.IsChecked = true;
-                        break;
+                    var theme = root.RequestedTheme;
+                    switch (theme)
+                    {
+                        case ElementTheme.Light:
+                            themeCombo.SelectedIndex = 0;
+                            break;
+                        case ElementTheme.Dark:
+                            themeCombo.SelectedIndex = 1;
+                            break;
+                        default:
+                            themeCombo.SelectedIndex = 2;
+                            break;
+                    }
+                }
+                else
+                {
+                    themeCombo.SelectedIndex = 2;
                 }
             }
-            else
+
+            var navCombo = this.FindName("NavStyleCombo") as ComboBox;
+            if (navCombo != null) 
             {
-                SystemRadio.IsChecked = true;
+                if (MainWindow.Current != null)
+                {
+                    var mode = MainWindow.Current.GetNavStyle();
+                    navCombo.SelectedIndex = mode == NavigationViewPaneDisplayMode.Top ? 1 : 0;
+                }
+                else
+                {
+                    navCombo.SelectedIndex = 0; // default to Left
+                }
             }
         }
 
-
-        private void ThemeRadio_Checked(object sender, RoutedEventArgs e)
+        private void ThemeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (MainWindow.Current == null) return;
 
-            if (LightRadio.IsChecked == true)
+            var combo = sender as ComboBox;
+            if (combo == null) return;
+
+            if (combo.SelectedIndex == 0)
             {
                 MainWindow.Current.ApplyTheme(ElementTheme.Light);
             }
-            else if (DarkRadio.IsChecked == true)
+            else if (combo.SelectedIndex == 1)
             {
                 MainWindow.Current.ApplyTheme(ElementTheme.Dark);
             }
             else
             {
                 MainWindow.Current.ApplyTheme(ElementTheme.Default);
+            }
+        }
+
+        private void NavStyleCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (MainWindow.Current == null) return;
+
+            var combo = sender as ComboBox;
+            if (combo == null) return;
+
+            // PaneDisplayMode can be Left, Top, LeftMinimal, LeftCompact etc. We'll map "Left" and "Top".
+            if (combo.SelectedItem is ComboBoxItem item && (item.Content as string) == "Top")
+            {
+                MainWindow.Current.SetNavStyle(NavigationViewPaneDisplayMode.Top);
+            }
+            else
+            {
+                MainWindow.Current.SetNavStyle(NavigationViewPaneDisplayMode.Left);
             }
         }
 
