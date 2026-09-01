@@ -78,13 +78,25 @@
 				<toolkit:SettingsExpander.HeaderIcon>
 					<FontIcon Glyph="&#xE74E;" />
 				</toolkit:SettingsExpander.HeaderIcon>
-				<toolkit:SettingsExpander.Items>
-					<toolkit:SettingsCard>
-						<toolkit:SettingsCard.Description>
-							<Border Height="16" />
-						</toolkit:SettingsCard.Description>
-					</toolkit:SettingsCard>
-				</toolkit:SettingsExpander.Items>
+            <toolkit:SettingsExpander.Items>
+                <toolkit:SettingsCard>
+                    <toolkit:SettingsCard.Description>
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Choose where projects and related files are stored." TextWrapping="Wrap" />
+                            <ComboBox x:Name="StorageProviderCombo" SelectionChanged="StorageProviderCombo_SelectionChanged">
+                                <ComboBoxItem Content="OneDrive" />
+                                <ComboBoxItem Content="Local" />
+                            </ComboBox>
+
+                            <!-- Local folder selection shown when Local is selected -->
+                            <StackPanel x:Name="LocalFolderPanel" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
+                                <TextBox x:Name="LocalFolderPathTextBox" Width="420" IsReadOnly="True" />
+                                <Button x:Name="BrowseLocalFolderButton" Content="Browse..." Click="BrowseLocalFolderButton_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </toolkit:SettingsCard.Description>
+                </toolkit:SettingsCard>
+            </toolkit:SettingsExpander.Items>
 			</toolkit:SettingsExpander>
 
         
