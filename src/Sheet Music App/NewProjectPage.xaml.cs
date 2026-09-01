@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Windows.Storage.Pickers;
+using WinRT.Interop;
 using Windows.Storage;
 using System;
 using Sheet_Music_App.Models;
@@ -40,12 +41,23 @@ namespace Sheet_Music_App
                 picker.FileTypeFilter.Add(".pdf");
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
 
-                // For desktop WinUI packaged apps, this works; otherwise additional window handle wiring may be needed.
+                // Initialize picker with the app window handle to avoid "Invalid window handle" COMException on WinUI3 desktop apps
+                if (App.AppWindow != null)
+                {
+                    var hwnd = WindowNative.GetWindowHandle(App.AppWindow);
+                    InitializeWithWindow.Initialize(picker, hwnd);
+                }
+
                 StorageFile file = await picker.PickSingleFileAsync();
                 if (file != null)
                 {
                     vm.PdfPath = file.Path;
                     vm.PdfFileName = file.Name;
+                    // update the button text to indicate a PDF is already chosen
+                    if (sender is Button sbtn)
+                    {
+                        sbtn.Content = "Choose new PDF";
+                    }
                 }
             }
         }
@@ -60,6 +72,8 @@ namespace Sheet_Music_App
 
         private async void SaveProjectButton_Click(object sender, RoutedEventArgs e)
         {
+            try
+            {
             string name = ProjectNameTextBox.Text?.Trim() ?? string.Empty;
             string description = ProjectDescriptionTextBox.Text?.Trim() ?? string.Empty;
 
@@ -69,19 +83,16 @@ namespace Sheet_Music_App
                 return;
             }
 
-            if (Pieces.Count == 0)
+            // If there are pieces, validate each has a valid PDF path
+            if (Pieces.Count > 0)
             {
-                await ShowMessageAsync("Add at least one piece with a PDF file.");
-                return;
-            }
-
-            // Validate pieces have PDFs
-            foreach (var p in Pieces)
-            {
-                if (string.IsNullOrEmpty(p.PdfPath) || !File.Exists(p.PdfPath))
+                foreach (var p in Pieces)
                 {
-                    await ShowMessageAsync("Each piece must have a valid PDF selected.");
-                    return;
+                    if (string.IsNullOrEmpty(p.PdfPath) || !File.Exists(p.PdfPath))
+                    {
+                        await ShowMessageAsync("Each piece must have a valid PDF selected.");
+                        return;
+                    }
                 }
             }
 
@@ -102,26 +113,62 @@ namespace Sheet_Music_App
                 project.Pieces.Add(piece);
             }
 
-            // Create project folder and copy PDFs into it
-            await _storage.CreateProjectAsync(project);
-            var projectFolder = _storage.GetProjectFolderPath(project);
-            var pdfsFolder = Path.Combine(projectFolder, "pdfs");
-            Directory.CreateDirectory(pdfsFolder);
-
-            // Copy files and update project model filenames to copied names
-            for (int i = 0; i < Pieces.Count; i++)
+            // Set storage root to user's chosen local folder (if configured)
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            var provider = (localSettings.Values["StorageProvider"] as string) ?? "Local";
+            if (provider == "Local")
             {
-                var src = Pieces[i].PdfPath!;
-                var destName = project.Pieces[i].Pdfs[0].FileName;
-                var destPath = Path.Combine(pdfsFolder, destName);
-                File.Copy(src, destPath, true);
+                var root = localSettings.Values["LocalStoragePath"] as string;
+                if (!string.IsNullOrEmpty(root))
+                {
+                    await _storage.SetRootPathAsync(root);
+                    project.Storage.Provider = "Local";
+                    project.Storage.Path = root;
+                }
             }
 
-            // Save updated project (in case any metadata changed)
-            await _storage.SaveProjectAsync(project);
+            // Create project folder and copy PDFs into it (if any pieces exist)
+            await _storage.CreateProjectAsync(project);
+            var projectFolder = _storage.GetProjectFolderPath(project);
+
+            if (project.Pieces.Count > 0)
+            {
+                var pdfsFolder = Path.Combine(projectFolder, "pdfs");
+                Directory.CreateDirectory(pdfsFolder);
+
+                // Copy files and update project model filenames to copied names
+                for (int i = 0; i < Pieces.Count; i++)
+                {
+                    var src = Pieces[i].PdfPath!;
+                    var destName = project.Pieces[i].Pdfs[0].FileName;
+                    var destPath = Path.Combine(pdfsFolder, destName);
+                    File.Copy(src, destPath, true);
+                }
+
+                // Save updated project (in case any metadata changed)
+                await _storage.SaveProjectAsync(project);
+            }
+            else
+            {
+                // No pieces: project already created by CreateProjectAsync
+            }
 
             await ShowMessageAsync("Project saved.");
-            // Optionally navigate back to HomePage
+            // Refresh navigation in main window so new project appears in the sidebar
+            if (MainWindow.Current != null)
+            {
+                await MainWindow.Current.PopulateProjectNavItemsAsync();
+            }
+
+            // Navigate back to HomePage
+            this.Frame?.Navigate(typeof(HomePage));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error saving project: " + ex.ToString());
+                await ShowMessageAsync("Error saving project: " + ex.Message + "\n\nFull details written to Debug Output.");
+            }
+
         }
 
         private async Task ShowMessageAsync(string text)
@@ -132,6 +179,13 @@ namespace Sheet_Music_App
                 Content = text,
                 CloseButtonText = "OK"
             };
+            // ContentDialog requires a XamlRoot when shown from a page that may not be
+            // directly attached to the visual tree in some hosting scenarios. Set it
+            // to this page's XamlRoot to ensure the dialog can be displayed.
+            if (this.XamlRoot != null)
+            {
+                dlg.XamlRoot = this.XamlRoot;
+            }
             await dlg.ShowAsync();
         }
     }

@@ -138,7 +138,9 @@ namespace Sheet_Music_App.Storage
 
         private static string GetDefaultDocumentsPath()
         {
-            var docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            // Use USERPROFILE\Documents to avoid OneDrive redirected Documents folders
+            var userProfile = Environment.GetEnvironmentVariable("USERPROFILE") ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var docs = Path.Combine(userProfile, "Documents");
             return Path.Combine(docs, "Sheet Music App");
         }
 

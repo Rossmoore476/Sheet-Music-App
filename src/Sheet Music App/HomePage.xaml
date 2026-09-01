@@ -2,12 +2,65 @@
 <Page
     x:Class="Sheet_Music_App.HomePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Sheet_Music_App">
 
     <Grid Padding="24">
         <StackPanel Spacing="16">
             <TextBlock Text="Home" FontSize="24" FontWeight="SemiBold" />
-            <!-- Empty Home page -->
+
+            <ItemsControl x:Name="ProjectsItemsControl">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:ProjectViewModel">
+                        <Border Margin="0,8" Padding="12" CornerRadius="6" BorderThickness="1"
+                                Background="{ThemeResource SystemControlBackgroundAltHighBrush}"
+                                BorderBrush="{ThemeResource SystemControlDisabledBaseLowBrush}">
+                            <Grid>
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{x:Bind Name}" FontSize="16" FontWeight="SemiBold" />
+                                    <TextBlock Text="{x:Bind Description}" TextWrapping="Wrap" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+
+                                    <ItemsControl ItemsSource="{x:Bind Pieces}">
+                                        <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:ProjectPieceViewModel">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{x:Bind Index}" FontWeight="SemiBold"
+                                                               Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                                                    <TextBlock Text="." FontWeight="SemiBold"
+                                                               Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                                                    <TextBlock Text="{x:Bind Title}" Margin="6,0,0,0"
+                                                               Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                                                    <TextBlock Text=" - " Margin="6,0,0,0"
+                                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                                                    <TextBlock Text="{x:Bind Composer}"
+                                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock Text="{x:Bind NoPiecesNote}" FontStyle="Italic"
+                                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                                </StackPanel>
+
+                                <!-- Ellipses button in the top-right corner to show delete option -->
+                                <Button HorizontalAlignment="Right" VerticalAlignment="Top" Height="32" Margin="0,0,0,0">
+                                    <Button.Content>
+                                        <SymbolIcon Symbol="More" />
+                                    </Button.Content>
+                                    <Button.Flyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem Text="Delete" Click="DeleteProjectMenuItem_Click" CommandParameter="{x:Bind Id}" />
+                                        </MenuFlyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Button x:Name="CreateNewProjectButton" Content="New Project" HorizontalAlignment="Left" />
+
         </StackPanel>
     </Grid>
 </Page>

@@ -25,7 +25,8 @@ namespace Sheet_Music_App
     /// </summary>
     public sealed partial class MainWindow : Window
     {
-        public ObservableCollection<CategoryBase> Categories { get; } = new ObservableCollection<CategoryBase>();
+        // kept Category types for potential template use; project nav items are populated dynamically
+        private Sheet_Music_App.Storage.LocalFolderStorage? _navStorage;
         public static new MainWindow? Current { get; private set; }
 
         public MainWindow() 
@@ -33,64 +34,81 @@ namespace Sheet_Music_App
             InitializeComponent();
             Current = this;
 
-            // populate navigation categories after InitializeComponent so UI bindings are available
-            Categories.Add(new Category { Name = "Category 1", Glyph = Symbol.Home, Tooltip = "This is category 1" });
-            Categories.Add(new Category { Name = "Category 2", Glyph = Symbol.Keyboard, Tooltip = "This is category 2" });
-            Categories.Add(new Category { Name = "Category 3", Glyph = Symbol.Library, Tooltip = "This is category 3" });
-            Categories.Add(new Category { Name = "Category 4", Glyph = Symbol.Mail, Tooltip = "This is category 4" });
-
-            // If there are no projects, hide Home and the Projects header and don't add project items.
-            if (Categories.Count == 0)
-            {
-                HomeNavItem.Visibility = Visibility.Collapsed;
-                ProjectsHeader.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                HomeNavItem.Visibility = Visibility.Visible;
-                ProjectsHeader.Visibility = Visibility.Visible;
-                // insert project items between the header and the New Project item
-                int insertIndex = nvSample.MenuItems.IndexOf(NewProjectNavItem);
-                if (insertIndex < 0)
-                {
-                    // fallback: append to the end
-                    insertIndex = nvSample.MenuItems.Count;
-                }
-
-                foreach (var catBase in Categories)
-                {
-                    if (catBase is Category cat)
-                    {
-                        var navItem = new NavigationViewItem
-                        {
-                            Content = cat.Name,
-                            Icon = new SymbolIcon(Symbol.Library),
-                            Tag = cat.Name
-                        };
-
-                        ToolTipService.SetToolTip(navItem, cat.Tooltip);
-                        nvSample.MenuItems.Insert(insertIndex++, navItem);
-                    }
-                }
-            }
+            // Populate project nav items dynamically from storage
+            _ = PopulateProjectNavItemsAsync();
 
             // Wire up back handling and navigation tracking so the back button works between pages
             nvSample.BackRequested += NvSample_BackRequested;
             ContentFrame.Navigated += ContentFrame_Navigated;
+            // initial page selection will be handled after nav items are populated
+        }
 
-            // Choose initial page: Home if there are projects, otherwise NewProject
-            if (Categories.Count > 0)
+        public async System.Threading.Tasks.Task PopulateProjectNavItemsAsync()
+        {
+            // respect user's configured local storage path if set
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            var provider = (localSettings.Values["StorageProvider"] as string) ?? "Local";
+            var root = localSettings.Values["LocalStoragePath"] as string;
+            if (provider == "Local" && !string.IsNullOrEmpty(root))
             {
-                nvSample.SelectedItem = HomeNavItem;
-                ContentFrame.Navigate(typeof(HomePage));
-                this.Title = "Home - Sheet Music App";
+                _navStorage = new Sheet_Music_App.Storage.LocalFolderStorage(root);
             }
             else
             {
+                _navStorage = new Sheet_Music_App.Storage.LocalFolderStorage();
+            }
+
+            var summaries = (await _navStorage.ListProjectsAsync()).ToList();
+
+            if (summaries.Count == 0)
+            {
+                HomeNavItem.Visibility = Visibility.Collapsed;
+                ProjectsHeader.Visibility = Visibility.Collapsed;
                 nvSample.SelectedItem = NewProjectNavItem;
                 ContentFrame.Navigate(typeof(NewProjectPage));
                 this.Title = "New Project - Sheet Music App";
+                return;
             }
+
+            HomeNavItem.Visibility = Visibility.Visible;
+            ProjectsHeader.Visibility = Visibility.Visible;
+
+            int insertIndex = nvSample.MenuItems.IndexOf(NewProjectNavItem);
+            if (insertIndex < 0) insertIndex = nvSample.MenuItems.Count;
+
+            // Remove any existing project items that were previously inserted between the ProjectsHeader and NewProjectNavItem
+            var headerIndex = nvSample.MenuItems.IndexOf(ProjectsHeader);
+            if (headerIndex >= 0)
+            {
+                // Items directly after the header up to (but not including) the NewProjectNavItem are project items
+                while (nvSample.MenuItems.Count > headerIndex + 1)
+                {
+                    var next = nvSample.MenuItems[headerIndex + 1];
+                    if (next == NewProjectNavItem) break;
+                    nvSample.MenuItems.RemoveAt(headerIndex + 1);
+                }
+
+                // Recompute insertIndex in case it changed
+                insertIndex = nvSample.MenuItems.IndexOf(NewProjectNavItem);
+                if (insertIndex < 0) insertIndex = nvSample.MenuItems.Count;
+            }
+
+            foreach (var s in summaries)
+            {
+                var navItem = new NavigationViewItem
+                {
+                    Content = s.Name,
+                    Icon = new SymbolIcon(Symbol.Library),
+                    Tag = s.Name
+                };
+                ToolTipService.SetToolTip(navItem, s.Location);
+                nvSample.MenuItems.Insert(insertIndex++, navItem);
+            }
+
+            // Choose Home as initial page
+            nvSample.SelectedItem = HomeNavItem;
+            ContentFrame.Navigate(typeof(HomePage));
+            this.Title = "Home - Sheet Music App";
         }
 
         public void ApplyTheme(ElementTheme theme)
