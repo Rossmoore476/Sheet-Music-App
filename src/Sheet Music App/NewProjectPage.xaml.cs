@@ -19,6 +19,7 @@ namespace Sheet_Music_App
     {
         private ObservableCollection<PieceViewModel> Pieces { get; } = new ObservableCollection<PieceViewModel>();
         private LocalFolderStorage _storage = new LocalFolderStorage();
+        private bool _suppressNavigationPrompt = false;
 
         public NewProjectPage()
         {
@@ -26,6 +27,84 @@ namespace Sheet_Music_App
             PiecesListView.ItemsSource = Pieces;
             AddPieceButton.Click += AddPieceButton_Click;
             SaveProjectButton.Click += SaveProjectButton_Click;
+            this.Loaded += NewProjectPage_Loaded;
+            this.Unloaded += NewProjectPage_Unloaded;
+        }
+
+        private void NewProjectPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (this.Frame != null)
+            {
+                this.Frame.Navigating += Frame_Navigating;
+            }
+        }
+
+        private void NewProjectPage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if (this.Frame != null)
+            {
+                this.Frame.Navigating -= Frame_Navigating;
+            }
+        }
+
+        private bool HasUnsavedChanges()
+        {
+            if (!string.IsNullOrWhiteSpace(ProjectNameTextBox.Text)) return true;
+            if (!string.IsNullOrWhiteSpace(ProjectDescriptionTextBox.Text)) return true;
+            foreach (var p in Pieces)
+            {
+                if (!string.IsNullOrWhiteSpace(p.Title)) return true;
+                if (!string.IsNullOrWhiteSpace(p.Composer)) return true;
+                if (!string.IsNullOrWhiteSpace(p.PdfPath)) return true;
+            }
+            return false;
+        }
+
+        private async void Frame_Navigating(object sender, Microsoft.UI.Xaml.Navigation.NavigatingCancelEventArgs e)
+        {
+            try
+            {
+                if (_suppressNavigationPrompt)
+                {
+                    // allow navigation once after suppression
+                    _suppressNavigationPrompt = false;
+                    return;
+                }
+
+                // If navigating to the same page type (e.g., clicking New Project while already on it), allow without prompting
+                if (e.SourcePageType == this.GetType()) return;
+
+                if (!HasUnsavedChanges()) return;
+
+                // cancel navigation and ask the user
+                e.Cancel = true;
+
+                var dlg = new ContentDialog
+                {
+                    Title = "Discard changes?",
+                    Content = "You have unsaved changes. If you navigate away they will be lost. Do you want to discard changes?",
+                    PrimaryButtonText = "Discard",
+                    CloseButtonText = "Cancel"
+                };
+                if (this.XamlRoot != null) dlg.XamlRoot = this.XamlRoot;
+
+                var res = await dlg.ShowAsync();
+                if (res == ContentDialogResult.Primary)
+                {
+                    // proceed with the originally requested navigation
+                    _suppressNavigationPrompt = true;
+                    // Try to navigate to the requested page
+                    if (e.SourcePageType != null)
+                    {
+                        this.Frame?.Navigate(e.SourcePageType, e.Parameter);
+                    }
+                    else if (e.NavigationMode == Microsoft.UI.Xaml.Navigation.NavigationMode.Back && this.Frame.CanGoBack)
+                    {
+                        this.Frame.GoBack();
+                    }
+                }
+            }
+            catch { }
         }
 
         private void AddPieceButton_Click(object sender, RoutedEventArgs e)
@@ -154,14 +233,15 @@ namespace Sheet_Music_App
             }
 
             await ShowMessageAsync("Project saved.");
-            // Refresh navigation in main window so new project appears in the sidebar
+            // Refresh navigation in main window so new project appears in the sidebar (don't cause intermediate navigation)
             if (MainWindow.Current != null)
             {
-                await MainWindow.Current.PopulateProjectNavItemsAsync();
+                await MainWindow.Current.PopulateProjectNavItemsAsync(suppressNavigation: true);
             }
 
-            // Navigate back to HomePage
-            this.Frame?.Navigate(typeof(HomePage));
+            // Navigate to the project's details page
+            _suppressNavigationPrompt = true;
+            this.Frame?.Navigate(typeof(ProjectDetailsPage), project.Id.ToString());
             }
             catch (Exception ex)
             {

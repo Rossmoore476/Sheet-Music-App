@@ -28,6 +28,10 @@ namespace Sheet_Music_App
         // kept Category types for potential template use; project nav items are populated dynamically
         private Sheet_Music_App.Storage.LocalFolderStorage? _navStorage;
         public static new MainWindow? Current { get; private set; }
+        // track last committed selected item so we can revert UI selection when navigation is cancelled
+        private object? _lastSelectedItem;
+        // currently displayed project id (Tag) when ProjectDetailsPage is shown
+        private string? _currentProjectId;
 
         public MainWindow() 
         {
@@ -40,10 +44,12 @@ namespace Sheet_Music_App
             // Wire up back handling and navigation tracking so the back button works between pages
             nvSample.BackRequested += NvSample_BackRequested;
             ContentFrame.Navigated += ContentFrame_Navigated;
+            // remember initial selection
+            _lastSelectedItem = nvSample.SelectedItem;
             // initial page selection will be handled after nav items are populated
         }
 
-        public async System.Threading.Tasks.Task PopulateProjectNavItemsAsync()
+        public async System.Threading.Tasks.Task PopulateProjectNavItemsAsync(bool suppressNavigation = false)
         {
             // respect user's configured local storage path if set
             var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
@@ -64,9 +70,12 @@ namespace Sheet_Music_App
             {
                 HomeNavItem.Visibility = Visibility.Collapsed;
                 ProjectsHeader.Visibility = Visibility.Collapsed;
-                nvSample.SelectedItem = NewProjectNavItem;
-                ContentFrame.Navigate(typeof(NewProjectPage));
-                this.Title = "New Project - Sheet Music App";
+                if (!suppressNavigation)
+                {
+                    nvSample.SelectedItem = NewProjectNavItem;
+                    ContentFrame.Navigate(typeof(NewProjectPage));
+                    this.Title = "New Project - Sheet Music App";
+                }
                 return;
             }
 
@@ -99,16 +108,19 @@ namespace Sheet_Music_App
                 {
                     Content = s.Name,
                     Icon = new SymbolIcon(Symbol.Library),
-                    Tag = s.Name
+                    Tag = s.Id.ToString()
                 };
                 ToolTipService.SetToolTip(navItem, s.Location);
                 nvSample.MenuItems.Insert(insertIndex++, navItem);
             }
 
-            // Choose Home as initial page
+            // Choose Home as initial page (unless caller requested no navigation)
             nvSample.SelectedItem = HomeNavItem;
-            ContentFrame.Navigate(typeof(HomePage));
-            this.Title = "Home - Sheet Music App";
+            if (!suppressNavigation)
+            {
+                ContentFrame.Navigate(typeof(HomePage));
+                this.Title = "Home - Sheet Music App";
+            }
         }
 
         public void ApplyTheme(ElementTheme theme)
@@ -140,6 +152,16 @@ namespace Sheet_Music_App
             }
 
             // handle other item invocations by Tag
+            // revert visual selection to last committed item so pages can cancel navigation without leaving the UI selected
+            try
+            {
+                if (_lastSelectedItem != null)
+                {
+                    nvSample.SelectedItem = _lastSelectedItem;
+                }
+            }
+            catch { }
+
             if (args.InvokedItemContainer?.Tag is string tag)
             {
                 if (tag == "Home")
@@ -151,14 +173,34 @@ namespace Sheet_Music_App
 
                 if (tag == "NewProject")
                 {
+                    // If we're already on the NewProjectPage, do nothing to avoid resetting the form
+                    if (ContentFrame.Content is NewProjectPage)
+                    {
+                        return;
+                    }
                     ContentFrame.Navigate(typeof(NewProjectPage));
                     this.Title = "New Project - Sheet Music App";
                     return;
                 }
 
-                // If a project item was clicked, navigate to project page (if implemented) or show Home
+                // If a project item was clicked, navigate to ProjectDetailsPage using the project id stored in Tag
+                if (Guid.TryParse(tag, out var projectId))
+                {
+                    // If already viewing this project's details, do nothing
+                    if (ContentFrame.Content is ProjectDetailsPage && _currentProjectId != null && _currentProjectId == tag)
+                    {
+                        return;
+                    }
+
+                    ContentFrame.Navigate(typeof(ProjectDetailsPage), tag);
+                    // Optionally set the title to the project's name if we can resolve it later; use Id for now
+                    this.Title = "Project - Sheet Music App";
+                    return;
+                }
+
+                // fallback: navigate to Home
                 ContentFrame.Navigate(typeof(HomePage));
-                this.Title = tag + " - Sheet Music App";
+                this.Title = "Home - Sheet Music App";
             }
 
             // no navigation for TreeView items (they are shown inside the Categories nav item)
@@ -182,10 +224,33 @@ namespace Sheet_Music_App
             if (sourcePageType == typeof(HomePage))
             {
                 nvSample.SelectedItem = HomeNavItem;
+                _lastSelectedItem = nvSample.SelectedItem;
+                _currentProjectId = null;
             }
             else if (sourcePageType == typeof(NewProjectPage))
             {
                 nvSample.SelectedItem = NewProjectNavItem;
+                _lastSelectedItem = nvSample.SelectedItem;
+                _currentProjectId = null;
+            }
+            else if (sourcePageType == typeof(ProjectDetailsPage))
+            {
+                // Try to select the nav item corresponding to the project id passed as parameter
+                if (e.Parameter is string idStr)
+                {
+                    // Find the navigation view item with Tag == idStr
+                    foreach (var mi in nvSample.MenuItems)
+                    {
+                        if (mi is NavigationViewItem nvi && nvi.Tag is string tag && tag == idStr)
+                        {
+                            nvSample.SelectedItem = nvi;
+                            _lastSelectedItem = nvSample.SelectedItem;
+                            _currentProjectId = idStr;
+                            this.Title = (nvi.Content?.ToString() ?? "Project") + " - Sheet Music App";
+                        return;
+                        }
+                    }
+                }
             }
         }
 

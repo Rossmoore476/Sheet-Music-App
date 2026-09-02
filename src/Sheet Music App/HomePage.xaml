@@ -53,6 +53,8 @@
                                         </MenuFlyout>
                                     </Button.Flyout>
                                 </Button>
+                                <!-- Edit button in bottom-right to open project details -->
+                                <Button Content="Edit" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,0" Click="EditProjectButton_Click" CommandParameter="{x:Bind Id}" />
                             </Grid>
                         </Border>
                     </DataTemplate>

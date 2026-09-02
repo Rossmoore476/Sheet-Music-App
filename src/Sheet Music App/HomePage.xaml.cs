@@ -80,6 +80,21 @@ namespace Sheet_Music_App
             this.Frame?.Navigate(typeof(NewProjectPage));
         }
 
+        private void EditProjectButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn)
+            {
+                if (btn.CommandParameter is Guid id)
+                {
+                    this.Frame?.Navigate(typeof(ProjectDetailsPage), id.ToString());
+                }
+                else if (btn.CommandParameter is string idStr && Guid.TryParse(idStr, out var gid))
+                {
+                    this.Frame?.Navigate(typeof(ProjectDetailsPage), idStr);
+                }
+            }
+        }
+
         private async void DeleteProjectMenuItem_Click(object sender, RoutedEventArgs e)
         {
             if (sender is MenuFlyoutItem item && item.CommandParameter is Guid projectId)
