@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Sheet_Music_App.ProjectFullscreenPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Sheet_Music_App">
+
+    <Grid Padding="24" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+        <StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                <Button x:Name="BackButton" Content="Back" Click="BackButton_Click" Margin="12" />
+            </StackPanel>
+
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24">
+                <TextBlock x:Name="FullscreenTitle" FontSize="36" FontWeight="Bold" Text="Project" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Page>

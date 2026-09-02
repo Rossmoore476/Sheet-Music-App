@@ -50,5 +50,10 @@
                 <Frame x:Name="ContentFrame" />
             </NavigationView.Content>
         </NavigationView>
+
+        <!-- Fullscreen overlay for project "Open" view. Hidden by default. Sits above the NavigationView. -->
+        <Grid x:Name="FullscreenOverlay" Visibility="Collapsed" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+            <Frame x:Name="FullscreenFrame" />
+        </Grid>
     </Grid>
 </Window>

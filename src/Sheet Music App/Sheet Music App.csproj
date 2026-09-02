@@ -15,6 +15,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Page Remove="NewProjectDialog.xaml" />
+    <Page Remove="ProjectFullscreenPage.xaml" />
   </ItemGroup>
   
 
@@ -52,6 +53,7 @@
     <None Update="NewProjectDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
+    <Page Include="ProjectFullscreenPage.xaml" />
   </ItemGroup>
   
 

@@ -14,6 +14,8 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Sheet_Music_App.Storage;
+using Microsoft.UI.Text;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -47,6 +49,47 @@ namespace Sheet_Music_App
             // remember initial selection
             _lastSelectedItem = nvSample.SelectedItem;
             // initial page selection will be handled after nav items are populated
+        }
+
+        // Show fullscreen project view overlay
+        public void ShowProjectFullscreen(string projectId)
+        {
+            if (string.IsNullOrEmpty(projectId)) return;
+            // remember last selected item
+            _lastSelectedItem = nvSample.SelectedItem;
+            _currentProjectId = projectId;
+            // disable navigation behind overlay
+            nvSample.IsEnabled = false;
+            // make overlay visible and navigate the fullscreen frame
+            FullscreenOverlay.Visibility = Visibility.Visible;
+            FullscreenFrame.Navigate(typeof(ProjectFullscreenPage), projectId);
+        }
+
+        // Close fullscreen overlay and restore navigation
+        public void CloseProjectFullscreen()
+        {
+            // hide overlay and re-enable navigation
+            FullscreenOverlay.Visibility = Visibility.Collapsed;
+            FullscreenFrame.Content = null;
+            nvSample.IsEnabled = true;
+
+            // restore selection to currently viewed project if set, otherwise restore last selected
+            if (!string.IsNullOrEmpty(_currentProjectId))
+            {
+                foreach (var mi in nvSample.MenuItems)
+                {
+                    if (mi is NavigationViewItem nvi && nvi.Tag is string tag && tag == _currentProjectId)
+                    {
+                        nvSample.SelectedItem = nvi;
+                        _lastSelectedItem = nvSample.SelectedItem;
+                        break;
+                    }
+                }
+            }
+            else if (_lastSelectedItem != null)
+            {
+                try { nvSample.SelectedItem = _lastSelectedItem; } catch { }
+            }
         }
 
         public async System.Threading.Tasks.Task PopulateProjectNavItemsAsync(bool suppressNavigation = false)
@@ -114,10 +157,26 @@ namespace Sheet_Music_App
                 nvSample.MenuItems.Insert(insertIndex++, navItem);
             }
 
-            // Choose Home as initial page (unless caller requested no navigation)
-            nvSample.SelectedItem = HomeNavItem;
-            if (!suppressNavigation)
+            // If caller suppressed navigation (refresh only), try to preserve the current project selection
+            if (suppressNavigation)
             {
+                if (!string.IsNullOrEmpty(_currentProjectId))
+                {
+                    foreach (var mi in nvSample.MenuItems)
+                    {
+                        if (mi is NavigationViewItem nvi && nvi.Tag is string tag && tag == _currentProjectId)
+                        {
+                            nvSample.SelectedItem = nvi;
+                            _lastSelectedItem = nvSample.SelectedItem;
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Choose Home as initial page
+                nvSample.SelectedItem = HomeNavItem;
                 ContentFrame.Navigate(typeof(HomePage));
                 this.Title = "Home - Sheet Music App";
             }

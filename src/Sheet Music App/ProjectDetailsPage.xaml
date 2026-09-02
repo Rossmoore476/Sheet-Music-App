@@ -4,10 +4,91 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Sheet_Music_App">
 
+    <Page.Resources>
+        <local:BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <local:BoolToSymbolConverter x:Key="BoolToSymbol" />
+    </Page.Resources>
+
     <Grid Padding="24">
         <StackPanel Spacing="12">
-            <TextBlock x:Name="TitleText" FontSize="24" FontWeight="SemiBold" />
-            <TextBlock x:Name="DescriptionText" TextWrapping="Wrap" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                <TextBlock x:Name="TitleText" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBox x:Name="TitleEditBox" Visibility="Collapsed" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" Width="400" />
+                <Button x:Name="TitleEditButton" ToolTipService.ToolTip="Edit title">
+                    <SymbolIcon x:Name="TitleEditIcon" Symbol="Edit" />
+                </Button>
+            </StackPanel>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock x:Name="DescriptionText" TextWrapping="Wrap" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                    <TextBox x:Name="DescriptionEditBox" Visibility="Collapsed" TextWrapping="Wrap" AcceptsReturn="True" Height="120" />
+                </StackPanel>
+                <Button x:Name="DescriptionEditButton" Grid.Column="1" ToolTipService.ToolTip="Edit description">
+                    <SymbolIcon x:Name="DescriptionEditIcon" Symbol="Edit" />
+                </Button>
+            </Grid>
+
+            <TextBlock x:Name="CreatedText" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+
+            <TextBlock x:Name="PiecesHeaderText" Text="Pieces" FontWeight="SemiBold" Margin="0,12,0,0" />
+            <TextBlock x:Name="NoPiecesText" Text="No pieces added." FontStyle="Italic" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" Margin="0,8,0,0" Visibility="Collapsed" />
+
+            <ItemsControl x:Name="PiecesItemsControl">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:PieceEditableViewModel">
+                        <Border Margin="0,8" Padding="8" CornerRadius="6" Background="{ThemeResource SystemControlBackgroundAltHighBrush}" BorderBrush="{ThemeResource SystemControlDisabledBaseLowBrush}" BorderThickness="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <TextBlock Text="{x:Bind Index}" FontWeight="SemiBold" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                                    <TextBlock Text="." FontWeight="SemiBold" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+
+                                    <!-- Display mode -->
+                                    <StackPanel Orientation="Vertical" Visibility="{x:Bind IsEditing, Mode=OneWay, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}">
+                                        <TextBlock Text="{x:Bind Title, Mode=OneWay}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                                        <TextBlock Text="{x:Bind Composer, Mode=OneWay}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                                    </StackPanel>
+
+                                    <!-- Edit mode -->
+                                    <StackPanel Orientation="Vertical" Visibility="{x:Bind IsEditing, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                                        <TextBox Text="{x:Bind Title, Mode=TwoWay}" Width="300" />
+                                        <TextBox Text="{x:Bind Composer, Mode=TwoWay}" Width="300" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Click="EditPieceButton_Click" CommandParameter="{x:Bind Id, Mode=OneTime}">
+                                        <SymbolIcon Symbol="{x:Bind IsEditing, Mode=OneWay, Converter={StaticResource BoolToSymbol}}" />
+                                    </Button>
+                                    <Button HorizontalAlignment="Right">
+                                        <Button.Flyout>
+                                            <MenuFlyout>
+                                                <MenuFlyoutItem Text="Move Up" Click="MovePieceUp_Click" CommandParameter="{x:Bind Id}" IsEnabled="{x:Bind CanMoveUp, Mode=OneWay}" />
+                                                <MenuFlyoutItem Text="Move Down" Click="MovePieceDown_Click" CommandParameter="{x:Bind Id}" IsEnabled="{x:Bind CanMoveDown, Mode=OneWay}" />
+                                                <MenuFlyoutItem Text="Delete" Click="DeletePieceMenuItem_Click" CommandParameter="{x:Bind Id}" />
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                        <SymbolIcon Symbol="More" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,12,0,0">
+                <Button x:Name="AddPieceButton" Content="Add Piece" HorizontalAlignment="Left" Click="AddPieceButton_Click" />
+                <Button x:Name="OpenProjectButton" Content="Open" HorizontalAlignment="Left" Click="OpenProjectButton_Click" />
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Page>
