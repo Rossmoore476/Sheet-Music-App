@@ -5,15 +5,57 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Sheet_Music_App">
 
-    <Grid Padding="24" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
-        <StackPanel>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
-                <Button x:Name="BackButton" Content="Back" Click="BackButton_Click" Margin="12" />
-            </StackPanel>
+    <Grid Padding="0" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}" xmlns:controls="using:Microsoft.UI.Xaml.Controls">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24">
-                <TextBlock x:Name="FullscreenTitle" FontSize="36" FontWeight="Bold" Text="Project" />
+        <!-- Ribbon area -->
+        <Border Grid.Row="0" Background="{ThemeResource SystemControlBackgroundAltHighBrush}" BorderBrush="{ThemeResource SystemControlDisabledBaseLowBrush}" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Padding="12" VerticalAlignment="Center" Spacing="12">
+                    <!-- File button with dropdown -->
+                    <Button x:Name="FileButton" Content="File" HorizontalAlignment="Left">
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <MenuFlyoutItem Text="Save" Click="FileSaveMenuItem_Click" />
+                                <MenuFlyoutItem Text="Close" Click="FileCloseMenuItem_Click" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+
+                    <!-- Selector bar for ribbon tabs -->
+                    <controls:SelectorBar x:Name="RibbonSelectorBar" SelectionChanged="RibbonSelector_SelectionChanged" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <controls:SelectorBarItem x:Name="DrawItem" Text="Draw" IsSelected="True" />
+                        <controls:SelectorBarItem x:Name="InsertItem" Text="Insert" />
+                        <controls:SelectorBarItem x:Name="EditItem" Text="Edit" />
+                    </controls:SelectorBar>
+                </StackPanel>
+
+                <!-- Ribbons placeholder panels -->
+                <Grid Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" Padding="12">
+                    <Grid x:Name="DrawRibbon" Visibility="Visible">
+                        <TextBlock Text="DRAW RIBBON PLACEHOLDER TEXT" FontWeight="SemiBold" FontSize="14" />
+                    </Grid>
+                    <Grid x:Name="InsertRibbon" Visibility="Collapsed">
+                        <TextBlock Text="INSERT RIBBON PLACEHOLDER TEXT" FontWeight="SemiBold" FontSize="14" />
+                    </Grid>
+                    <Grid x:Name="EditRibbon" Visibility="Collapsed">
+                        <TextBlock Text="EDIT RIBBON PLACEHOLDER TEXT" FontWeight="SemiBold" FontSize="14" />
+                    </Grid>
+                </Grid>
             </StackPanel>
-        </StackPanel>
+        </Border>
+
+        <!-- Project content area: scrollable concatenated PDF pages -->
+        <Grid Grid.Row="1" Padding="0">
+            <StackPanel Orientation="Vertical">
+                <TextBlock x:Name="FullscreenTitle" FontSize="20" FontWeight="SemiBold" Margin="24,12" Text="Project" />
+                <ScrollViewer HorizontalScrollMode="Disabled" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="PdfPagesPanel" Orientation="Vertical" Padding="24" Spacing="12" />
+                </ScrollViewer>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Page>

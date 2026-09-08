@@ -136,6 +136,9 @@ namespace Sheet_Music_App
                 _pieces.Add(new ProjectPieceViewModel { Index = idx, Title = newPiece.Title, Composer = newPiece.Composer });
                 UpdatePieceMoveFlags();
 
+                // Ensure Open button enabled state reflects presence of PDFs
+                OpenProjectButton.IsEnabled = _project.Pieces.Any(pp => pp.Pdfs != null && pp.Pdfs.Count > 0);
+
                 if (MainWindow.Current != null) await MainWindow.Current.PopulateProjectNavItemsAsync(suppressNavigation: true);
             }
         }
@@ -542,6 +545,10 @@ namespace Sheet_Music_App
                         PiecesItemsControl.Visibility = Visibility.Collapsed;
                         // bind ItemsControl regardless of visibility so the UI is always backed by the editable collection
                         PiecesItemsControl.ItemsSource = _editablePieces;
+
+                    // Enable the Open button only if the project contains at least one PDF
+                    var hasPdfs = proj.Pieces.Any(pp => pp.Pdfs != null && pp.Pdfs.Count > 0);
+                    OpenProjectButton.IsEnabled = hasPdfs;
                     }
                     else
                     {

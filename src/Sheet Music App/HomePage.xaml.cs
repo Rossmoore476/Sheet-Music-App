@@ -66,6 +66,9 @@ namespace Sheet_Music_App
                         vm.Pieces.Add(new ProjectPieceViewModel { Index = idx++, Title = p.Title, Composer = p.Composer });
                     }
 
+                    // Determine whether the project contains any PDFs
+                    vm.HasPdfs = proj.Pieces.Any(pp => pp.Pdfs != null && pp.Pdfs.Count > 0);
+
                     vm.NoPiecesNote = vm.Pieces.Count == 0 ? "No pieces added." : string.Empty;
 
                     Projects.Add(vm);
@@ -91,6 +94,22 @@ namespace Sheet_Music_App
                 else if (btn.CommandParameter is string idStr && Guid.TryParse(idStr, out var gid))
                 {
                     this.Frame?.Navigate(typeof(ProjectDetailsPage), idStr);
+                }
+            }
+        }
+
+        private void OpenProjectButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn)
+            {
+                // CommandParameter may be Guid or string
+                if (btn.CommandParameter is Guid id)
+                {
+                    MainWindow.Current?.ShowProjectFullscreen(id.ToString());
+                }
+                else if (btn.CommandParameter is string idStr && Guid.TryParse(idStr, out var gid))
+                {
+                    MainWindow.Current?.ShowProjectFullscreen(idStr);
                 }
             }
         }
@@ -148,6 +167,7 @@ namespace Sheet_Music_App
         public string Description { get; set; } = string.Empty;
         public ObservableCollection<ProjectPieceViewModel> Pieces { get; } = new ObservableCollection<ProjectPieceViewModel>();
         public string NoPiecesNote { get; set; } = string.Empty;
+        public bool HasPdfs { get; set; } = false;
     }
 
     public class ProjectPieceViewModel
